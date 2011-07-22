@@ -14,11 +14,11 @@ class Command(BaseCommand):
         from django.db import connection
         from ... import settings
 
-        if not os.path.isdir(settings.BACKUP_LOCATION):
-            os.makedirs(settings.BACKUP_LOCATION)
         infile = os.path.join(settings.BACKUP_LOCATION, "%s.sql" %(settings.BACKUP_BASENAME))
 
-        if 'mysql' in settings.DB_ENGINE:
+        if not settings.RESTORE_ENABLED:
+            print 'restore not enabled, set settings.EXTENSIONS_RESTORE_ENABLED=True to enable'
+        elif 'mysql' in settings.DB_ENGINE:
             print 'Doing Mysql restore of database %s from %s' % (settings.DB_NAME, infile)
             self.do_mysql_restore(infile)
         elif 'postgres' in settings.DB_ENGINE:

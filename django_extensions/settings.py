@@ -39,6 +39,7 @@ if hasattr(settings, 'EXTENSIONS_BACKUP_LOCATION'):
 else:
     BACKUP_LOCATION = 'parts/database-backups'
 
+
 if hasattr(settings, 'EXTENSIONS_BACKUP_ARCHIVE_LOCATION'):
     BACKUP_ARCHIVE_LOCATION = settings.EXTENSIONS_BACKUP_ARCHIVE_LOCATION
 else:
@@ -54,3 +55,4 @@ if hasattr(settings, 'EXTENSIONS_GIT_BRANCH'):
 else:
     GIT_BRANCH = 'master'
 
+RESTORE_ENABLED = getattr(settings, 'EXTENSIONS_RESTORE_ENABLED', False)
