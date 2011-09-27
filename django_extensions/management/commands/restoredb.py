@@ -53,5 +53,8 @@ class Command(BaseCommand):
             args += ["--port=%s" % settings.DB_PORT]
         if settings.DB_NAME:
             args += [settings.DB_NAME]
-        os.system('PGPASSWORD=%s psql -c "drop schema public cascade; create schema public;" %s' % (settings.DB_PASSWD, ' '.join(args)))
+        os.system('PGPASSWORD=%s psql -c "drop schema public cascade; create schema public; alter schema public owner to %s" %s' % (
+            settings.DB_PASSWD,
+            settings.DB_USER,
+            ' '.join(args)))
         os.system('PGPASSWORD=%s psql %s < %s' % (settings.DB_PASSWD, ' '.join(args), infile))
