@@ -46,15 +46,16 @@ class Command(BaseCommand):
         from ... import settings
         args = []
         if settings.DB_USER:
-            args += ["--username=%s" % settings.DB_USER]
+            args += ["--username=\"%s\"" % settings.DB_USER]
         if settings.DB_HOST:
             args += ["--host=%s" % settings.DB_HOST]
         if settings.DB_PORT:
             args += ["--port=%s" % settings.DB_PORT]
         if settings.DB_NAME:
             args += [settings.DB_NAME]
-        os.system('PGPASSWORD=%s psql -c "drop schema public cascade; create schema public; alter schema public owner to %s" %s' % (
+        cmd = 'PGPASSWORD=%s psql -c "drop schema public cascade; create schema public; alter schema public owner to \\\"%s\\\"" %s' % (
             settings.DB_PASSWD,
             settings.DB_USER,
-            ' '.join(args)))
+            ' '.join(args))
+        os.system(cmd)
         os.system('PGPASSWORD=%s psql %s < %s' % (settings.DB_PASSWD, ' '.join(args), infile))
