@@ -28,31 +28,11 @@ if hasattr(settings, 'EXTENSIONS_BACKUP_ARCHIVE') and settings.EXTENSIONS_BACKUP
 else:
     BACKUP_CREATE_ARCHIVE = False
 
-# push backups to git by default (if possible)
-if hasattr(settings, 'EXTENSIONS_BACKUP_COMMIT_PUSH') and not settings.EXTENSIONS_BACKUP_COMMIT_PUSH:
-    BACKUP_COMMIT_PUSH = False
-else:
-    BACKUP_COMMIT_PUSH = True
-
-if hasattr(settings, 'EXTENSIONS_BACKUP_LOCATION'):
-    BACKUP_LOCATION = settings.EXTENSIONS_BACKUP_LOCATION
-else:
-    BACKUP_LOCATION = 'parts/database-backups'
-
-
-if hasattr(settings, 'EXTENSIONS_BACKUP_ARCHIVE_LOCATION'):
-    BACKUP_ARCHIVE_LOCATION = settings.EXTENSIONS_BACKUP_ARCHIVE_LOCATION
-else:
-    BACKUP_ARCHIVE_LOCATION = os.path.join(BACKUP_LOCATION, 'archive')
-
-if hasattr(settings, 'EXTENSIONS_GIT_REMOTE'):
-    GIT_REMOTE = settings.EXTENSIONS_GIT_REMOTE
-else:
-    GIT_REMOTE = 'origin'
-
-if hasattr(settings, 'EXTENSIONS_GIT_BRANCH'):
-    GIT_BRANCH = settings.EXTENSIONS_GIT_BRANCH
-else:
-    GIT_BRANCH = 'master'
-
-RESTORE_ENABLED = getattr(settings, 'EXTENSIONS_RESTORE_ENABLED', False)
+BACKUP_LOCATION = getattr(settings, 'EXTENSIONS_BACKUP_LOCATION', 'parts/database-backups')
+BACKUP_ARCHIVE_LOCATION = getattr(settings, 'EXTENSIONS_BACKUP_ARCHIVE_LOCATION', 'archive')
+BACKUP_GIT_COMMIT = getattr(settings, 'EXTENSOINS_BACKUP_COMMIT', False)
+BACKUP_GIT_PUSH = getattr(settings, 'EXTENSIONS_BACKUP_PUSH', False)
+BACKUP_GIT_REMOTE = getattr(settings, 'EXTENSIONS_BACKUP_GIT_REMOTE', 'origin')
+BACKUP_GIT_BRANCH = getattr(settings, 'EXTENSIONS_BACKUP_GIT_BRANCH', 'master')
+BACKUP_COMPRESSION = getattr(settings, 'EXTENSIONS_BACKUP_COMPRESSION', True)
+BACKUP_RESTORE_ENABLED = getattr(settings, 'EXTENSIONS_BACKUP_RESTORE_ENABLED', False)

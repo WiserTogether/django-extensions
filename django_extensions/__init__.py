@@ -1,3 +1,4 @@
+import logging
 
 VERSION = (0, 7, 'pre')
 
@@ -8,3 +9,5 @@ else:
     str_version = "%s.%s" % VERSION[:2]
 
 __version__ = str_version
+
+logger = logging.getLogger(__name__)
