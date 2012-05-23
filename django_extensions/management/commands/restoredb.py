@@ -14,16 +14,24 @@ class Command(BaseCommand):
         from django.db import connection
         from ... import settings
 
-        infile = os.path.join(settings.BACKUP_LOCATION, "%s.sql" %(settings.BACKUP_BASENAME))
+        sql_filepath = os.path.join(settings.BACKUP_LOCATION, "%s.sql" %(settings.BACKUP_BASENAME))
 
         if not settings.BACKUP_RESTORE_ENABLED:
             print 'restore not enabled, set settings.EXTENSIONS_BACKUP_RESTORE_ENABLED=True to enable'
-        elif 'mysql' in settings.DB_ENGINE:
-            print 'Doing Mysql restore of database %s from %s' % (settings.DB_NAME, infile)
-            self.do_mysql_restore(infile)
+            return
+
+        if settings.BACKUP_COMPRESSION:
+            compressed_file_path = "%s.gz" %(sql_filepath)
+            print "Decompressing %s to %s" %(compressed_file_path, sql_filepath)
+            os.system('cat %s | gzip -d > "%s"' %(compressed_file_path, sql_filepath))
+            os.unlink(compressed_file_path)
+
+        if 'mysql' in settings.DB_ENGINE:
+            print 'Doing Mysql restore of database %s from %s' % (settings.DB_NAME, sql_filepath)
+            self.do_mysql_restore(sql_filepath)
         elif 'postgres' in settings.DB_ENGINE:
-            print 'Doing Postgresql restore of database %s from %s' % (settings.DB_NAME, infile)
-            self.do_postgresql_restore(infile)
+            print 'Doing Postgresql restore of database %s from %s' % (settings.DB_NAME, sql_filepath)
+            self.do_postgresql_restore(sql_filepath)
         else:
             print 'Backup in %s engine not implemented' % settings.DB_ENGINE
 
@@ -53,6 +61,7 @@ class Command(BaseCommand):
             args += ["--port=%s" % settings.DB_PORT]
         if settings.DB_NAME:
             args += [settings.DB_NAME]
+
         cmd = 'PGPASSWORD=%s psql -c "drop schema public cascade; create schema public; alter schema public owner to \\\"%s\\\"" %s' % (
             settings.DB_PASSWD,
             settings.DB_USER,
