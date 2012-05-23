@@ -24,7 +24,6 @@ class Command(BaseCommand):
             compressed_file_path = "%s.gz" %(sql_filepath)
             print "Decompressing %s to %s" %(compressed_file_path, sql_filepath)
             os.system('cat %s | gzip -d > "%s"' %(compressed_file_path, sql_filepath))
-            os.unlink(compressed_file_path)
 
         if 'mysql' in settings.DB_ENGINE:
             print 'Doing Mysql restore of database %s from %s' % (settings.DB_NAME, sql_filepath)
@@ -34,6 +33,9 @@ class Command(BaseCommand):
             self.do_postgresql_restore(sql_filepath)
         else:
             print 'Backup in %s engine not implemented' % settings.DB_ENGINE
+
+        if settings.BACKUP_COMPRESSION:
+            os.unlink(sql_path)
 
     def do_mysql_restore(self, infile):
         from ... import settings
