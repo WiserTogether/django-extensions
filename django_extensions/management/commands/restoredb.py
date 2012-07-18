@@ -35,7 +35,7 @@ class Command(BaseCommand):
             print 'Backup in %s engine not implemented' % settings.DB_ENGINE
 
         if settings.BACKUP_COMPRESSION:
-            os.unlink(sql_path)
+            os.unlink(sql_filepath)
 
     def do_mysql_restore(self, infile):
         from ... import settings
