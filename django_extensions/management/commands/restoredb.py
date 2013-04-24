@@ -30,7 +30,6 @@ class Command(BaseCommand):
 
         if settings.BACKUP_COMPRESSION:
             compressed_file_path = "%s.gz" % (sql_filepath)
-            sql_filepath = "/tmp/%s.sql" % settings.BACKUP_BASENAME
             print "Decompressing %s to %s" % (compressed_file_path, sql_filepath)
             os.system('cat %s | gzip -d > "%s"' % (compressed_file_path, sql_filepath))
 
@@ -76,7 +75,7 @@ class Command(BaseCommand):
         if settings.DB_NAME:
             args += [settings.DB_NAME]
 
-        cmd = 'PGPASSWORD=%s psql -c "alter schema public owner to \\\"%s\\\"" %s' % (
+        cmd = 'PGPASSWORD=%s psql -c "drop schema public cascade; create schema public; alter schema public owner to \\\"%s\\\"" %s' % (
             settings.DB_PASSWD,
             settings.DB_USER,
             ' '.join(args))
@@ -88,12 +87,18 @@ class Command(BaseCommand):
         This command doesn't work since creating the tables as postgres sets owner to postgres
         and DB user is then unable to make changes to the table
         """
+        self.do_postgresql_restore(infile)
+
         from ... import settings
 
-        load_cmd = 'sudo -u postgres psql %s < %s' % (settings.DB_NAME, infile)
-        prep_cmd = 'sudo -u postgres psql %s -c "alter schema public owner to \\\"%s\\\""' % (
-            settings.DB_NAME,
-            settings.DB_USER)
-
-        os.system(load_cmd)
-        os.system(prep_cmd)
+        for extension_name in ['hstore', 'uuid-ossp']:
+            if settings.DB_VERSION == '9.0':
+                extension_path = os.path.join(settings.BACKUP_LOCATION, 'extensions', '%s.sql' % extension_name)
+                if os.path.exists(extension_path):
+                    load_extension_cmd = 'sudo -u postgres psql %s < %s' % (settings.DB_NAME, extension_path)
+                    print load_extension_cmd
+                    os.system(load_extension_cmd)
+            elif settings.DB_VERSION == '9.2':
+                load_extension_cmd = 'sudo -u postgres psql %s -c "create extension \\\"%s\\\""' % (settings.DB_NAME, extension_name)
+                print load_extension_cmd
+                os.system(load_extension_cmd)
