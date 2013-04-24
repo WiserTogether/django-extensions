@@ -4,33 +4,45 @@ __author__ = 'erik'
  Command for restoring a database
 """
 
-import os, time
+import os
+
+from optparse import make_option
+
 from django.core.management.base import BaseCommand
+
 
 class Command(BaseCommand):
     help = "Backup database. Only Mysql and Postgresql engines are implemented"
 
+    option_list = BaseCommand.option_list + (
+        make_option('--sudo', action='store_true', dest='as_superuser',
+                    help='Restore the database as a superuser'),
+    )
+
     def handle(self, *args, **options):
-        from django.db import connection
         from ... import settings
 
-        sql_filepath = os.path.join(settings.BACKUP_LOCATION, "%s.sql" %(settings.BACKUP_BASENAME))
+        sql_filepath = os.path.join(settings.BACKUP_LOCATION, "%s.sql" % (settings.BACKUP_BASENAME))
 
         if not settings.BACKUP_RESTORE_ENABLED:
             print 'restore not enabled, set settings.EXTENSIONS_BACKUP_RESTORE_ENABLED=True to enable'
             return
 
         if settings.BACKUP_COMPRESSION:
-            compressed_file_path = "%s.gz" %(sql_filepath)
-            print "Decompressing %s to %s" %(compressed_file_path, sql_filepath)
-            os.system('cat %s | gzip -d > "%s"' %(compressed_file_path, sql_filepath))
+            compressed_file_path = "%s.gz" % (sql_filepath)
+            sql_filepath = "/tmp/%s.sql" % settings.BACKUP_BASENAME
+            print "Decompressing %s to %s" % (compressed_file_path, sql_filepath)
+            os.system('cat %s | gzip -d > "%s"' % (compressed_file_path, sql_filepath))
 
         if 'mysql' in settings.DB_ENGINE:
             print 'Doing Mysql restore of database %s from %s' % (settings.DB_NAME, sql_filepath)
             self.do_mysql_restore(sql_filepath)
         elif 'postgres' in settings.DB_ENGINE:
             print 'Doing Postgresql restore of database %s from %s' % (settings.DB_NAME, sql_filepath)
-            self.do_postgresql_restore(sql_filepath)
+            if options['as_superuser']:
+                self.do_sudo_postgresql_restore(sql_filepath)
+            else:
+                self.do_postgresql_restore(sql_filepath)
         else:
             print 'Backup in %s engine not implemented' % settings.DB_ENGINE
 
@@ -64,9 +76,24 @@ class Command(BaseCommand):
         if settings.DB_NAME:
             args += [settings.DB_NAME]
 
-        cmd = 'PGPASSWORD=%s psql -c "drop schema public cascade; create schema public; alter schema public owner to \\\"%s\\\"" %s' % (
+        cmd = 'PGPASSWORD=%s psql -c "alter schema public owner to \\\"%s\\\"" %s' % (
             settings.DB_PASSWD,
             settings.DB_USER,
             ' '.join(args))
         os.system(cmd)
         os.system('PGPASSWORD=%s psql %s < %s' % (settings.DB_PASSWD, ' '.join(args), infile))
+
+    def do_sudo_postgresql_restore(self, infile):
+        """
+        This command doesn't work since creating the tables as postgres sets owner to postgres
+        and DB user is then unable to make changes to the table
+        """
+        from ... import settings
+
+        load_cmd = 'sudo -u postgres psql %s < %s' % (settings.DB_NAME, infile)
+        prep_cmd = 'sudo -u postgres psql %s -c "alter schema public owner to \\\"%s\\\""' % (
+            settings.DB_NAME,
+            settings.DB_USER)
+
+        os.system(load_cmd)
+        os.system(prep_cmd)
