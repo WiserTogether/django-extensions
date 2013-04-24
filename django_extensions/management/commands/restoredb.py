@@ -92,13 +92,15 @@ class Command(BaseCommand):
         from ... import settings
 
         for extension_name in ['hstore', 'uuid-ossp']:
+            print 'Loading postgres extension %s for DB %s' % (extension_name, settings.DB_NAME)
+            print 'Postgres version %s specified' % settings.DB_VERSION
             if settings.DB_VERSION == '9.0':
                 extension_path = os.path.join(settings.BACKUP_LOCATION, 'extensions', '%s.sql' % extension_name)
                 if os.path.exists(extension_path):
                     load_extension_cmd = 'sudo -u postgres psql %s < %s' % (settings.DB_NAME, extension_path)
-                    print load_extension_cmd
                     os.system(load_extension_cmd)
+                else:
+                    print 'Could not find extension file at %s' % extension_path
             elif settings.DB_VERSION == '9.2':
                 load_extension_cmd = 'sudo -u postgres psql %s -c "create extension \\\"%s\\\""' % (settings.DB_NAME, extension_name)
-                print load_extension_cmd
                 os.system(load_extension_cmd)

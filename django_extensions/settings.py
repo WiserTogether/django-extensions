@@ -17,7 +17,7 @@ else:
     DB_HOST = settings.DATABASE_HOST
     DB_PORT = settings.DATABASE_PORT
 
-DB_VERSION = settings.DB_VERSION
+DB_VERSION = getattr(settings, 'DB_VERSION', '')
 
 if hasattr(settings, 'PROJECT_NAME'):
     BACKUP_BASENAME = settings.PROJECT_NAME
