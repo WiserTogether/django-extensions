@@ -5,6 +5,7 @@ __author__ = 'erik'
 """
 
 import os
+import time
 
 from optparse import make_option
 
@@ -20,9 +21,11 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
+        start_time = time.time()
+
         from ... import settings
 
-        sql_filepath = os.path.join(settings.BACKUP_LOCATION, "%s.sql" % (settings.BACKUP_BASENAME))
+        sql_filepath = os.path.join(settings.BACKUP_LOCATION, "%s.sql" % settings.BACKUP_BASENAME)
 
         if not settings.BACKUP_RESTORE_ENABLED:
             print 'restore not enabled, set settings.EXTENSIONS_BACKUP_RESTORE_ENABLED=True to enable'
@@ -47,6 +50,9 @@ class Command(BaseCommand):
 
         if settings.BACKUP_COMPRESSION:
             os.unlink(sql_filepath)
+
+        end_time = time.time()
+        print '[PERF] Time taken to execute RestoreDB: %s s' % (end_time - start_time)
 
     def do_mysql_restore(self, infile):
         from ... import settings
