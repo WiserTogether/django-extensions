@@ -16,8 +16,19 @@ class Command(BaseCommand):
     help = "Backup database. Only Mysql and Postgresql engines are implemented"
 
     option_list = BaseCommand.option_list + (
-        make_option('--sudo', action='store_true', dest='as_superuser',
-                    help='Restore the database as a superuser'),
+        make_option(
+            '--sudo',
+            action='store_true',
+            dest='as_superuser',
+            help='Restore the database as a superuser'
+        ),
+        make_option(
+            '--clean-only',
+            action='store_true',
+            dest='clean_only',
+            default=False,
+            help='Clear out the schema but do not restore DB'
+        ),
     )
 
     def handle(self, *args, **options):
@@ -26,6 +37,8 @@ class Command(BaseCommand):
         from ... import settings
 
         sql_filepath = os.path.join(settings.BACKUP_LOCATION, "%s.sql" % settings.BACKUP_BASENAME)
+
+        self.clean_only = options['clean_only']
 
         if not settings.BACKUP_RESTORE_ENABLED:
             print 'restore not enabled, set settings.EXTENSIONS_BACKUP_RESTORE_ENABLED=True to enable'
@@ -86,7 +99,9 @@ class Command(BaseCommand):
             settings.DB_USER,
             ' '.join(args))
         os.system(cmd)
-        os.system('PGPASSWORD=%s psql %s < %s' % (settings.DB_PASSWD, ' '.join(args), infile))
+
+        if not self.clean_only:
+            os.system('PGPASSWORD=%s psql %s < %s' % (settings.DB_PASSWD, ' '.join(args), infile))
 
     def do_sudo_postgresql_restore(self, infile):
         """
